@@ -1,0 +1,62 @@
+.report-card {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    margin: 20px 0;
+    color: #333;
+  }
+  
+  .report-card h2 {
+    text-align: center;
+  }
+  
+  .student-card {
+    margin-bottom: 40px;
+  }
+  
+  .school-info {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .student-info {
+    margin-bottom: 20px;
+  }
+  
+ .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .table th,
+ .table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  }
+  
+  .result-summary {
+    margin-top: 20px;
+  }
+  
+  .result-summary p {
+    margin: 5px 0;
+  }
+  
+  .h1,
+  .h2,
+  .h3,
+  .h4 {
+    margin: 0;
+  }
+  
+.body{
+  background-color: #fff;
+  color: #333;
+}
+.inputs{
+  background-color: #fff;
+  color: #333;
+}
