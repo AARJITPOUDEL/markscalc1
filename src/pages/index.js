@@ -3,6 +3,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useRouter } from 'next/router';
 import App from './Home';
+
 const Login = () => {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -10,22 +11,19 @@ const Login = () => {
   const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
-    // Check if the user is already logged in
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setLoggedIn(true);
       }
     });
-
-    // Clean up the event listener when the component unmounts
     return () => unsubscribe();
   }, []);
 
   const onLogin = (e) => {
     e.preventDefault();
     signInWithEmailAndPassword(auth, email, password)
-      .then(() => {
-        setLoggedIn(true); // Update the loggedIn state
+      .then(() => { 
+        setLoggedIn(true);
       })
       .catch((error) => {
         const errorCode = error.code;
@@ -34,18 +32,27 @@ const Login = () => {
       });
   };
 
+  const emailRedirects = {
+    'pratech18@gmail.com': '/demo/Home',
+    'poudelarjit@gmail.com': '/pages/Home',
+  };
+
+  useEffect(() => {
+    if (loggedIn) {
+      const redirectPath = emailRedirects[email] || '/'; 
+      router.push(redirectPath);
+    }
+  }, [loggedIn, email]);
+
   return (
     <>
       <main>
         <section>
           {loggedIn ? (
-
-<div>
-<App></App>
-      
+            <div>
+              <App />
             </div>
           ) : (
-            // Render the login form if not logged in
             <div className="flex h-screen items-center justify-center px-4 sm:px-6 lg:px-8">
               <div className="w-full max-w-md space-y-8">
                 <div>

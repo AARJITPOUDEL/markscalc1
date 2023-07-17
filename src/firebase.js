@@ -18,3 +18,4 @@ const db = getFirestore(app);
 export { db, collection, addDoc, getDocs}; 
 export const auth = getAuth(app);
 export default app;
+

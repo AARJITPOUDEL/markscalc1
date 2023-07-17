@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
-import { db, collection, addDoc, getDocs } from '../firebase'; 
-import { auth } from '../firebase'; 
+import { db, collection, addDoc, getDocs } from '../../firebase'; 
+import { auth } from '../../firebase'; 
 import {  signOut } from "firebase/auth";
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import styles from './style.module.css'; 
 import { useRouter } from 'next/router';
-import Router from 'next/router';
-import ProtectedPage from './ProtectedPgae'; 
+import ProtectedPage from '../ProtectedPgae'; 
 function Result({ students }) {
   const calculateGrade = (marks) => {
     if (marks >= 90) {  
@@ -43,7 +42,7 @@ function Result({ students }) {
     }
   };
   const saveStudentData = async () => {
-    const schoolName = 'Baraha'; // Use the 'Baraha' school name
+    const schoolName = 'Pragati';
     try {
       const collectionRef = collection(db, "students");
       const filledStudents = students.filter((student) => {
@@ -63,7 +62,7 @@ function Result({ students }) {
   };
 
   return (
-<ProtectedPage allowedEmails={allowedEmailsForHome}>
+    <ProtectedPage allowedEmails={allowedEmailsForHome}>
     <div className={styles['report-card']}>
       <h2 className={styles.h2}>Report Card</h2>
       {students.map((student, index) => {
@@ -122,12 +121,12 @@ function Result({ students }) {
     </ProtectedPage>
   );
 }
-const allowedEmailsForHome = ['poudelaarjit@gmail.com'];
-function App() {
-  const saveStudentDataForBaraha = () => {
-  saveStudentData('Baraha');  
-};
 
+function App() {
+  const saveStudentDataForPragati = () => {
+  saveStudentData('Pragati');  
+};
+const allowedEmailsForHome = ['pratech18@gmail.com'];
   const [students, setStudents] = useState(Array(20).fill().map(() => ({
     
     name: '',
@@ -213,13 +212,13 @@ function App() {
     }
   };
   const showSavedData = async () => {
-    const schoolName = 'Baraha'; // Use the 'Baraha' school name
+    const schoolName = 'Pragati'; // Use the 'Pragati' school name
     try {
       const studentsCollectionRef = collection(db, "students");
       const querySnapshot = await getDocs(studentsCollectionRef);
       const retrievedStudents = querySnapshot.docs
         .map((doc) => doc.data())
-        .filter((student) => student.school === schoolName); // Filter by 'Baraha' school name
+        .filter((student) => student.school === schoolName); // Filter by 'Pragati' school name
       setStudents(retrievedStudents);
       setShowData(true);
     } catch (error) {
@@ -232,7 +231,7 @@ function App() {
       console.log("Signed out successfully")
     }).catch((error) => {
     });
-}
+} 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
@@ -244,7 +243,8 @@ function App() {
 
     return () => unsubscribe();
   }, []);
-  return (<ProtectedPage allowedEmails={allowedEmailsForHome}>
+  return (    <ProtectedPage allowedEmails={allowedEmailsForHome}>
+
     <div style={{ fontFamily: 'Arial, sans-serif' }} className={styles.body}>    
       {loggedIn && <button onClick={handleLogout} className={styles.logoutButton}>Logout</button>}
 
