@@ -43,7 +43,7 @@ function Result({ students }) {
     }
   };
   const saveStudentData = async () => {
-    const schoolName = 'Baraha'; // Use the 'Baraha' school name
+    const schoolName = 'Baraha'; 
     try {
       const collectionRef = collection(db, "students");
       const filledStudents = students.filter((student) => {
@@ -52,7 +52,7 @@ function Result({ students }) {
       });
       await Promise.all(
         filledStudents.map(async (student) => {
-          await addDoc(collectionRef, { ...student, school: schoolName }); // Include the school name
+          await addDoc(collectionRef, { ...student, school: schoolName }); 
         })
       );
   
@@ -124,6 +124,7 @@ function Result({ students }) {
 }
 const allowedEmailsForHome = ['poudelaarjit@gmail.com'];
 function App() {
+  
   const saveStudentDataForBaraha = () => {
   saveStudentData('Baraha');  
 };
@@ -213,13 +214,13 @@ function App() {
     }
   };
   const showSavedData = async () => {
-    const schoolName = 'Baraha'; // Use the 'Baraha' school name
+    const schoolName = 'Baraha';
     try {
       const studentsCollectionRef = collection(db, "students");
       const querySnapshot = await getDocs(studentsCollectionRef);
       const retrievedStudents = querySnapshot.docs
         .map((doc) => doc.data())
-        .filter((student) => student.school === schoolName); // Filter by 'Baraha' school name
+        .filter((student) => student.school === schoolName); 
       setStudents(retrievedStudents);
       setShowData(true);
     } catch (error) {

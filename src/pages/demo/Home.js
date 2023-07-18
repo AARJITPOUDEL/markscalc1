@@ -121,12 +121,12 @@ function Result({ students }) {
     </ProtectedPage>
   );
 }
+const allowedEmailsForHome = ['pratech18@gmail.com'];
 
 function App() {
   const saveStudentDataForPragati = () => {
   saveStudentData('Pragati');  
 };
-const allowedEmailsForHome = ['pratech18@gmail.com'];
   const [students, setStudents] = useState(Array(20).fill().map(() => ({
     
     name: '',
