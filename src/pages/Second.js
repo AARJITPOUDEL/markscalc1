@@ -9,24 +9,25 @@ import styles from './style.module.css';
 import { useRouter } from 'next/router';
 import Router from 'next/router';
 import ProtectedPage from './ProtectedPgae'; 
-function Result({ students , selectedTerm}) {
-  const schoolName = 'Baraha';
-
-  const calculateGrade = (marks) => {
-    if (marks >= 90) {  
-      return 'A+';
-    } else if (marks >= 80) {
-      return 'A';
-    } else if (marks >= 70) {
-      return 'B';
-    } else if (marks >= 60) {
-      return 'C';
-    } else if (marks >= 50) {
-      return 'D';
-    } else {
-      return 'F';
-    }
-  };
+function Result({ students, selectedTerm }) {
+    const schoolName = 'Baraha';
+  
+    const calculateGrade = (marks) => {
+      if (marks >= 90) {  
+        return 'A+';
+      } else if (marks >= 80) {
+        return 'A';
+      } else if (marks >= 70) {
+        return 'B';
+      } else if (marks >= 60) {
+        return 'C';
+      } else if (marks >= 50) {
+        return 'D';
+      } else {
+        return 'F';
+      }
+    };
+  
 
   const cardRefs = useRef([]);
 
@@ -216,16 +217,15 @@ function App() {
       return 0.0;
     }
   };
-  const showSavedData = async (selectedTerm) => {
+  const showSavedData = async () => {
     const schoolName = 'Baraha';
     try {
       const studentsCollectionRef = collection(db, 'students');
       const querySnapshot = await getDocs(studentsCollectionRef);
       const retrievedStudents = querySnapshot.docs
         .map((doc) => doc.data())
-        .filter((student) => student.school === schoolName && student.term === selectedTerm); 
+        .filter((student) => student.school === schoolName && student.term === selectedTerm);
       setStudents(retrievedStudents);
-      setShowData(true);
     } catch (error) {
       console.error('Error occurred while retrieving student data:', error);
     }
@@ -238,7 +238,7 @@ function App() {
     }).catch((error) => {
     });
 }
-  useEffect(() => {
+useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setLoggedIn(true);
@@ -247,74 +247,87 @@ function App() {
       }
     });
 
+    // Automatically load the data for the second term when the page is opened
+    showSavedData();
+
     return () => unsubscribe();
-  }, []);
+  }, [selectedTerm]); 
   return (<ProtectedPage allowedEmails={allowedEmailsForHome}>
     <div style={{ fontFamily: 'Arial, sans-serif' }} className={styles.body}>    
       {loggedIn && <button onClick={handleLogout} className={styles.logoutButton}>Logout</button>}
 
       <h1 className={styles.h1}>Marks Calculator</h1>
-      <div>
+      {/* <div>
         <button onClick={() => setSelectedTerm('First Term')}>First Term</button>
         <button onClick={() => setSelectedTerm('Second Term')}>Second Term</button>
         <button onClick={() => setSelectedTerm('Third Term')}>Third Term</button>
-      </div>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>English</th>
-            <th>Social</th>
-            <th>Nepali</th>
-            <th>Maths</th>
-            <th>Total Marks</th>
-          </tr>
-        </thead>
-        <tbody>
-          {students.map((student, index) => (
-            <tr key={index}>
-              <td>
-                <input
-                  type="text"
-                  value={student.name}
-                  onChange={(e) => handleNameChange(index, e.target.value)
-                
-                }
-                className={styles.inputs}
-                />
-              </td>
-              {student.subjects.map((subject, subjectIndex) => (
-                <td key={subjectIndex}>
+      </div> */}
+      <h1 className={styles.h1}>Marks Calculator</h1>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>English</th>
+              <th>Social</th>
+              <th>Nepali</th>
+              <th>Maths</th>
+              <th>Total Marks</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.map((student, index) => (
+              <tr key={index}>
+                <td>
                   <input
-                    type="number"
-                    value={subject.marks}
-                    onChange={(e) =>
-                      handleMarksChange(index, subjectIndex, e.target.value)
-                    }
-                    min="0"
-                    max="100"
+                    type="text"
+                    value={student.name}
+                    onChange={(e) => handleNameChange(index, e.target.value)}
                     className={styles.inputs}
-
                   />
                 </td>
-              ))}
-              <td>{student.totalMarks}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                {student.subjects.map((subject, subjectIndex) => (
+                  <td key={subjectIndex}>
+                    <input
+                      type="number"
+                      value={subject.marks}
+                      onChange={(e) =>
+                        handleMarksChange(index, subjectIndex, e.target.value)
+                      }
+                      min="0"
+                      max="100"
+                      className={styles.inputs}
+                    />
+                    {/* New input field to add marks for the second term */}
+                    <input
+                      type="number"
+                      value={subject.secondTermMarks} // Update this to use the correct field for the second term marks
+                      onChange={(e) => {
+                        // Handle changes to the second term marks here
+                      }}
+                      min="0"
+                      max="100"
+                      className={styles.secondinputs}
+                    />
+                  </td>
+                ))}
+                <td>{student.totalMarks}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
       <button style={{ marginTop: '10px' }} onClick={calculateMarks}>
         Calculate
       </button>
 
-
       <button style={{ marginTop: '10px' }} onClick={() => showSavedData(selectedTerm)}>
-  Show Data
-</button>
+          Show Data
+        </button>
 
       {showResult && <Result students={students} selectedTerm={selectedTerm} />} 
         {showData && <Result students={students} selectedTerm={selectedTerm} />}
+        <Result students={students} selectedTerm={selectedTerm} />
+
     </div>
     </ProtectedPage>
   );

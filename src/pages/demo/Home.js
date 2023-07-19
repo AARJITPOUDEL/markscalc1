@@ -7,8 +7,9 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import styles from './style.module.css'; 
 import { useRouter } from 'next/router';
+import Router from 'next/router';
 import ProtectedPage from '../ProtectedPgae'; 
-function Result({ students }) {
+function Result({ students , selectedTerm}) {
   const calculateGrade = (marks) => {
     if (marks >= 90) {  
       return 'A+';
@@ -44,17 +45,17 @@ function Result({ students }) {
   const saveStudentData = async () => {
     const schoolName = 'Pragati';
     try {
-      const collectionRef = collection(db, "students");
+      const collectionRef = collection(db, 'students');
       const filledStudents = students.filter((student) => {
         const allFieldsFilled = student.subjects.every((subject) => subject.marks > 0);
         return allFieldsFilled;
       });
       await Promise.all(
         filledStudents.map(async (student) => {
-          await addDoc(collectionRef, { ...student, school: schoolName }); // Include the school name
+          await addDoc(collectionRef, { ...student, school: schoolName, term: selectedTerm });
         })
       );
-  
+
       alert('Student data saved successfully');
     } catch (error) {
       console.log('Error occurred while saving student data:', error);
@@ -62,7 +63,7 @@ function Result({ students }) {
   };
 
   return (
-    <ProtectedPage allowedEmails={allowedEmailsForHome}>
+<ProtectedPage allowedEmails={allowedEmailsForHome}>
     <div className={styles['report-card']}>
       <h2 className={styles.h2}>Report Card</h2>
       {students.map((student, index) => {
@@ -74,7 +75,7 @@ function Result({ students }) {
         return (
           <div key={index} className={styles['student-card']} ref={(ref) => (cardRefs.current[index] = ref)}>
             <div className={styles['school-info']}>
-              <h3 className={styles.h3}>School Name</h3>
+              <h3 className={styles.h3}>{schoolName}</h3>
               <p>Address, City</p>
               <p>Phone: XXXXXXXXXX</p>
             </div>
@@ -122,11 +123,13 @@ function Result({ students }) {
   );
 }
 const allowedEmailsForHome = ['pratech18@gmail.com'];
-
 function App() {
+  const [selectedTerm, setSelectedTerm] = useState('First Term');
+
   const saveStudentDataForPragati = () => {
   saveStudentData('Pragati');  
 };
+
   const [students, setStudents] = useState(Array(20).fill().map(() => ({
     
     name: '',
@@ -211,27 +214,28 @@ function App() {
       return 0.0;
     }
   };
-  const showSavedData = async () => {
-    const schoolName = 'Pragati'; // Use the 'Pragati' school name
+  const showSavedData = async (selectedTerm) => {
+    const schoolName = 'Pragati';
     try {
-      const studentsCollectionRef = collection(db, "students");
+      const studentsCollectionRef = collection(db, 'students');
       const querySnapshot = await getDocs(studentsCollectionRef);
       const retrievedStudents = querySnapshot.docs
         .map((doc) => doc.data())
-        .filter((student) => student.school === schoolName); // Filter by 'Pragati' school name
+        .filter((student) => student.school === schoolName && student.term === selectedTerm); 
       setStudents(retrievedStudents);
       setShowData(true);
     } catch (error) {
       console.error('Error occurred while retrieving student data:', error);
     }
   };
+  
   const handleLogout = () => {               
     signOut(auth).then(() => {
       router.push('/');
       console.log("Signed out successfully")
     }).catch((error) => {
     });
-} 
+}
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
@@ -243,13 +247,16 @@ function App() {
 
     return () => unsubscribe();
   }, []);
-  return (    <ProtectedPage allowedEmails={allowedEmailsForHome}>
-
+  return (<ProtectedPage allowedEmails={allowedEmailsForHome}>
     <div style={{ fontFamily: 'Arial, sans-serif' }} className={styles.body}>    
       {loggedIn && <button onClick={handleLogout} className={styles.logoutButton}>Logout</button>}
 
       <h1 className={styles.h1}>Marks Calculator</h1>
-
+      <div>
+        <button onClick={() => setSelectedTerm('First Term')}>First Term</button>
+        <button onClick={() => setSelectedTerm('Second Term')}>Second Term</button>
+        <button onClick={() => setSelectedTerm('Third Term')}>Third Term</button>
+      </div>
       <table className={styles.table}>
         <thead>
           <tr>
@@ -300,11 +307,12 @@ function App() {
       </button>
 
 
-      <button style={{ marginTop: '10px' }} onClick={showSavedData}>
-        Show Data
-      </button>
-      {showResult && <Result students={students} />}
-      {showData && <Result students={students} />}
+      <button style={{ marginTop: '10px' }} onClick={() => showSavedData(selectedTerm)}>
+  Show Data
+</button>
+
+      {showResult && <Result students={students} selectedTerm={selectedTerm} />} 
+        {showData && <Result students={students} selectedTerm={selectedTerm} />}
     </div>
     </ProtectedPage>
   );
