@@ -9,9 +9,39 @@ import styles from './style.module.css';
 import { useRouter } from 'next/router';
 import Router from 'next/router';
 import ProtectedPage from './ProtectedPgae'; 
-function Result({ students, selectedTerm }) {
+function Result({ students }) {
     const schoolName = 'Baraha';
+    const handleMarksChange = (studentIndex, subjectIndex, term, marks) => {
+      const updatedStudents = [...students];
+      const parsedMarks = parseInt(marks);
   
+      // Update the appropriate field based on the term
+      if (term === 'secondTerm') {
+        updatedStudents[studentIndex].subjects[subjectIndex].secondTermMarks = parsedMarks;
+      }
+  
+      // Recalculate the total marks and grade for the student
+      const filledFields = updatedStudents[studentIndex].subjects.filter(
+        (subject) => subject.marks > 0 || subject.firstTermMarks > 0
+      );
+  
+      if (filledFields.length === 0) {
+        // No marks entered for any subject, reset the totalMarks and overallGrade
+        updatedStudents[studentIndex].totalMarks = 0;
+        updatedStudents[studentIndex].overallGrade = '';
+      } else {
+        const totalMarks = filledFields.reduce(
+          (total, subject) => total + subject.firstTermMarks + subject.secondTermMarks,
+          0
+        );
+        const averageMarks = totalMarks / (2 * filledFields.length); // Divide by 2 since we have two terms
+        updatedStudents[studentIndex].totalMarks = totalMarks;
+        updatedStudents[studentIndex].totalGPA = calculateGPA(averageMarks);
+        updatedStudents[studentIndex].overallGrade = calculateGrade(averageMarks);
+      }
+  
+      setStudents(updatedStudents);
+    };
     const calculateGrade = (marks) => {
       if (marks >= 90) {  
         return 'A+';
@@ -55,7 +85,7 @@ function Result({ students, selectedTerm }) {
       });
       await Promise.all(
         filledStudents.map(async (student) => {
-          await addDoc(collectionRef, { ...student, school: schoolName, term: selectedTerm });
+          await addDoc(collectionRef, { ...student, school: schoolName, term: "Second Term" });
         })
       );
 
@@ -66,86 +96,77 @@ function Result({ students, selectedTerm }) {
   };
 
   return (
-<ProtectedPage allowedEmails={allowedEmailsForHome}>
+    <ProtectedPage allowedEmails={allowedEmailsForHome}>
     <div className={styles['report-card']}>
       <h2 className={styles.h2}>Report Card</h2>
       {students.map((student, index) => {
-        const filledFields = student.subjects.filter((subject) => subject.marks > 0);
+        const filledFields = student.subjects.filter((subject) => subject.secondTermMarks > 0);
         if (filledFields.length === 0) {
           return null;
         }
 
-        return (
-          <div key={index} className={styles['student-card']} ref={(ref) => (cardRefs.current[index] = ref)}>
-            <div className={styles['school-info']}>
-            <h3 className={styles.h3}>{schoolName}</h3>
-              <p>Address, City</p>
-              <p>Phone: XXXXXXXXXX</p>
+          return (
+            <div key={index} className={styles['student-card']} ref={(ref) => (cardRefs.current[index] = ref)}>
+               <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Subject</th>
+                    <th>2nd Term Marks</th>
+                    <th>1st Term Marks</th>
+                    <th>Grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {student.subjects.map((subject, subjectIndex) => {
+                    if (subject.secondTermMarks > 0) {
+                      return (
+                        <tr key={subjectIndex}>
+                          <td>{subject.name}</td>
+                          <td>{subject.secondTermMarks}</td>
+                          <td>{subject.marks}</td>
+                          <td>{calculateGrade(subject.secondTermMarks)}</td>
+                        </tr>
+                      );
+                    }
+                    return null;
+                  })}
+                </tbody>
+              </table>
+              <div className={styles['result-summary']}>
+                <p>Total Marks: {student.totalMarks}</p>
+                <p>Total GPA: {student.totalGPA.toFixed(2)}</p>
+                <p>Overall Grade: {student.overallGrade}</p>
+              </div>
+              <button onClick={() => downloadReportCard(index)}>Download Report Card</button>
             </div>
-            <div className={styles['student-info']}>
-              <h4 className={styles.h4}>Student: {student.name}</h4>
-              <p>Class: X</p>
-              <p>Roll Number: {index + 1}</p>
-            </div>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Subject</th>
-                  <th>Marks</th>
-                  <th>Grade</th>
-                </tr>
-              </thead>
-              <tbody>
-                {student.subjects.map((subject, subjectIndex) => {
-                  if (subject.marks > 0) {
-                    return (
-                      <tr key={subjectIndex}>
-                        <td>{subject.name}</td>
-                        <td>{subject.marks}</td>
-                        <td>{calculateGrade(subject.marks)}</td>
-                      </tr>
-                    );
-                  }
-                  return null;
-                })}
-              </tbody>
-            </table>
-            <div className={styles['result-summary']}>
-              <p>Total Marks: {student.totalMarks}</p>
-              <p>Total GPA: {student.totalGPA.toFixed(2)}</p>
-              <p>Overall Grade: {student.overallGrade}</p>
-            </div>
-            <button onClick={() => downloadReportCard(index)}>Download Report Card</button>
-          </div>
-        );
-      })}
-
-      <button onClick={saveStudentData}>Save Student Data</button>
-    </div>
+          );
+        })}
+        <button onClick={saveStudentData}>Save Student Data</button>
+      </div>
     </ProtectedPage>
   );
 }
 const allowedEmailsForHome = ['poudelaarjit@gmail.com'];
 function App() {
-  const [selectedTerm, setSelectedTerm] = useState('First Term');
-
+  const [selectedTerm, setSelectedTerm] = useState('Second Term'); 
   const saveStudentDataForBaraha = () => {
   saveStudentData('Baraha');  
 };
-
-  const [students, setStudents] = useState(Array(20).fill().map(() => ({
-    
+const [students, setStudents] = useState(
+  Array(20).fill().map(() => ({
     name: '',
     subjects: [
-      { name: 'English', marks: 0 },
-      { name: 'Social', marks: 0 },
-      { name: 'Nepali', marks: 0 },
-      { name: 'Maths', marks: 0 },
+      { name: 'English', marks: 0, secondTermMarks: 0 },
+      { name: 'Social', marks: 0, secondTermMarks: 0 },
+      { name: 'Nepali', marks: 0, secondTermMarks: 0 },
+      { name: 'Maths', marks: 0, secondTermMarks: 0 },
     ],
     totalMarks: 0,
     totalGPA: 0,
     overallGrade: '',
-  })));
+  }))
+);
+
   const router = useRouter();
   const [showResult, setShowResult] = useState(false);
   const [showData, setShowData] = useState(false);
@@ -157,34 +178,76 @@ function App() {
     setStudents(updatedStudents);
   };
 
-  const handleMarksChange = (studentIndex, subjectIndex, marks) => {
+  const handleMarksChange = (studentIndex, subjectIndex, term, marks) => {
     const updatedStudents = [...students];
-    updatedStudents[studentIndex].subjects[subjectIndex].marks = parseInt(marks);
+    const parsedMarks = parseInt(marks);
+
+    // Update the appropriate field based on the term
+    if (term === 'secondTerm') {
+      updatedStudents[studentIndex].subjects[subjectIndex].secondTermMarks = parsedMarks;
+    }
+
+    // Recalculate the total marks and grade for the student
+    const filledFields = updatedStudents[studentIndex].subjects.filter(
+      (subject) => subject.secondTermMarks > 0
+    );
+
+    if (filledFields.length === 0) {
+      // No marks entered for any subject, reset the totalMarks and overallGrade
+      updatedStudents[studentIndex].totalMarks = 0;
+      updatedStudents[studentIndex].totalGPA = 0;
+      updatedStudents[studentIndex].overallGrade = '';
+    } else {
+      const totalMarks = filledFields.reduce(
+        (total, subject) => total + subject.secondTermMarks,
+        0
+      );
+      const averageMarks = totalMarks / filledFields.length;
+      const overallTotalMarks = totalMarks;
+      const overallAverageMarks = averageMarks;
+
+      updatedStudents[studentIndex].totalMarks = overallTotalMarks;
+      updatedStudents[studentIndex].totalGPA = calculateGPA(overallAverageMarks);
+      updatedStudents[studentIndex].overallGrade = calculateGrade(overallAverageMarks);
+    }
+
     setStudents(updatedStudents);
   };
-
   const calculateMarks = () => {
     const updatedStudents = students.map((student) => {
-      const filledFields = student.subjects.filter((subject) => subject.marks > 0);
+      const filledFields = student.subjects.filter(
+        (subject) => subject.secondTermMarks > 0
+      );
       if (filledFields.length === 0) {
-        return student; 
+        // No marks entered for any subject, reset the totalMarks and overallGrade
+        return {
+          ...student,
+          totalMarks: 0,
+          totalGPA: 0,
+          overallGrade: '',
+        };
       }
-      const totalMarks = filledFields.reduce((total, subject) => total + subject.marks, 0);
+
+      const totalMarks = filledFields.reduce(
+        (total, subject) => total + subject.secondTermMarks,
+        0
+      );
       const averageMarks = totalMarks / filledFields.length;
-      const totalGPA = calculateGPA(averageMarks);
-      const overallGrade = calculateGrade(averageMarks);
+      const overallTotalMarks = totalMarks;
+      const overallAverageMarks = averageMarks;
 
       return {
         ...student,
-        totalMarks,
-        totalGPA,
-        overallGrade,
+        totalMarks: overallTotalMarks,
+        totalGPA: calculateGPA(overallAverageMarks),
+        overallGrade: calculateGrade(overallAverageMarks),
       };
     });
 
     setStudents(updatedStudents);
     setShowResult(true);
   };
+
 
   const calculateGrade = (marks) => {
     if (marks >= 90) {
@@ -217,20 +280,28 @@ function App() {
       return 0.0;
     }
   };
+
   const showSavedData = async () => {
     const schoolName = 'Baraha';
     try {
       const studentsCollectionRef = collection(db, 'students');
       const querySnapshot = await getDocs(studentsCollectionRef);
-      const retrievedStudents = querySnapshot.docs
-        .map((doc) => doc.data())
-        .filter((student) => student.school === schoolName && student.term === selectedTerm);
-      setStudents(retrievedStudents);
+      const retrievedStudents = querySnapshot.docs.map((doc) => doc.data());
+      
+      // Initialize the secondTermMarks property to 0 for all subjects
+      const updatedStudents = retrievedStudents.map((student) => ({
+        ...student,
+        subjects: student.subjects.map((subject) => ({
+          ...subject,
+          secondTermMarks: 0,
+        })),
+      }));
+      
+      setStudents(updatedStudents);
     } catch (error) {
       console.error('Error occurred while retrieving student data:', error);
     }
   };
-  
   const handleLogout = () => {               
     signOut(auth).then(() => {
       router.push('/');
@@ -239,19 +310,21 @@ function App() {
     });
 }
 useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setLoggedIn(true);
-      } else {
-        setLoggedIn(false);
-      }
-    });
+  const unsubscribe = auth.onAuthStateChanged((user) => {
+    if (user) {
+      setLoggedIn(true);
+    } else {
+      setLoggedIn(false);
+    }
+  });
 
-    // Automatically load the data for the second term when the page is opened
-    showSavedData();
-
+  showSavedData();
     return () => unsubscribe();
   }, [selectedTerm]); 
+
+
+
+
   return (<ProtectedPage allowedEmails={allowedEmailsForHome}>
     <div style={{ fontFamily: 'Arial, sans-serif' }} className={styles.body}>    
       {loggedIn && <button onClick={handleLogout} className={styles.logoutButton}>Logout</button>}
@@ -287,7 +360,7 @@ useEffect(() => {
                 </td>
                 {student.subjects.map((subject, subjectIndex) => (
                   <td key={subjectIndex}>
-                    <input
+                    {/* <input
                       type="number"
                       value={subject.marks}
                       onChange={(e) =>
@@ -296,18 +369,18 @@ useEffect(() => {
                       min="0"
                       max="100"
                       className={styles.inputs}
-                    />
-                    {/* New input field to add marks for the second term */}
-                    <input
-                      type="number"
-                      value={subject.secondTermMarks} // Update this to use the correct field for the second term marks
-                      onChange={(e) => {
-                        // Handle changes to the second term marks here
-                      }}
-                      min="0"
-                      max="100"
-                      className={styles.secondinputs}
-                    />
+                    /> */}
+                  <input
+  type="number"
+  value={subject.secondTermMarks}
+  onChange={(e) =>
+    handleMarksChange(index, subjectIndex, 'secondTerm', e.target.value)
+  }
+  min="0"
+  max="100"
+  className={styles.secondinputs}
+/>
+
                   </td>
                 ))}
                 <td>{student.totalMarks}</td>
